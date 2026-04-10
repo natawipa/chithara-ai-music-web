@@ -10,10 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -117,6 +122,23 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+
 # Custom user model
+
 AUTH_USER_MODEL = "api.User"
 
+
+# Suno API
+
+SUNO_API_BASE_URL = os.environ.get("SUNO_API_BASE_URL", "https://api.sunoapi.org/api/v1")
+SUNO_API_KEY = os.environ.get("SUNO_API_KEY", "")
+SUNO_CALLBACK_URL = os.environ.get("SUNO_CALLBACK_URL", "http://localhost:8000/api/suno/callback/")
+
+
+# Google OAuth 2.0
+
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+GOOGLE_OAUTH_REDIRECT_URI = os.environ.get(
+    "GOOGLE_OAUTH_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback/"
+)

@@ -29,6 +29,7 @@ class GenerationRequest(models.Model):
         choices=GenerationStatus.choices,
         default=GenerationStatus.PROCESSING,
     )
+    external_task_id = models.CharField(max_length=255, null=True, blank=True)
     error_message = models.TextField(blank=True, default="")
     song = models.OneToOneField(
         "Song",
