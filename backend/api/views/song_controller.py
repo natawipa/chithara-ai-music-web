@@ -133,3 +133,37 @@ def set_privacy(request, id):
     song.save(update_fields=["privacy_level", "updated_at"])
 
     return JsonResponse({"id": song.id, "privacy_level": song.privacy_level})
+
+
+@json_login_required
+@require_POST
+def upload_cover(request, id):
+    """Upload cover image for a song owned by the authenticated user.
+
+    POST /api/songs/<id>/upload-cover/
+    Body (multipart/form-data): cover_image
+
+    Rules:
+        - Ownership is required.
+        - If cover image already exists, do not overwrite.
+    """
+    try:
+        song = Song.objects.get(id=id, user=request.user)
+    except Song.DoesNotExist:
+        return JsonResponse({"error": "Song not found."}, status=404)
+
+    cover_image = request.FILES.get("cover_image")
+    if not cover_image:
+        return JsonResponse({"error": "cover_image file is required."}, status=400)
+
+    song.cover_image = cover_image
+    song.cover_color = ""
+    song.save(update_fields=["cover_image", "cover_color", "updated_at"])
+
+    return JsonResponse(
+        {
+            "id": song.id,
+            "cover_image": song.cover_image.url,
+            "cover_color": song.cover_color,
+        }
+    )

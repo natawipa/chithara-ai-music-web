@@ -17,7 +17,8 @@ from django.views.decorators.http import require_POST
 from api.decorators import json_login_required
 from api.models import GenerationRequest
 from api.models.enums import GenerationStatus, Genre
-from api.services.suno_service import SunoService
+from api.services.suno_service import InsufficientCreditError
+from api.services.suno_service_proxy import SunoServiceProxy
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,8 @@ def _song_data(song) -> dict:
         "id": song.id,
         "title": song.title,
         "audio_file": song.audio_file,
+        "cover_image": song.cover_image.url if song.cover_image else None,
+        "cover_color": song.cover_color,
         "genre": song.genre,
         "tone": song.tone,
         "occasion": song.occasion,
@@ -84,16 +87,19 @@ def create(request):
         style = genre
 
     try:
-        service = SunoService()
+        service = SunoServiceProxy()
         task_id = service.generate_song(
+            generation_request,
             {
                 "title": title,
                 "prompt": description,   # description → prompt
                 "style": style,          # genre label → style
             }
         )
-        generation_request.external_task_id = task_id
-        generation_request.save(update_fields=["external_task_id", "updated_at"])
+
+    except InsufficientCreditError:
+        generation_request.mark_failed("Out of credit")
+        return JsonResponse({"error": "Out of credit"}, status=400)
 
     except Exception as exc:
         logger.exception(
@@ -133,6 +139,19 @@ def status(request, id):
         # Use 404 for both missing and wrong-owner to avoid ID enumeration.
         return JsonResponse({"error": "Generation request not found."}, status=404)
 
+    if (
+        generation_request.status == GenerationStatus.PROCESSING
+        and generation_request.external_task_id
+    ):
+        try:
+            SunoServiceProxy().sync_generation_status(generation_request)
+            generation_request.refresh_from_db(fields=["status", "song", "error_message"])
+        except Exception:
+            logger.exception(
+                "Failed to sync Suno status for GenerationRequest %s",
+                generation_request.id,
+            )
+
     song = None
     if generation_request.status == GenerationStatus.COMPLETED and generation_request.song:
         song = _song_data(generation_request.song)
@@ -142,6 +161,7 @@ def status(request, id):
             "id": generation_request.id,
             "status": generation_request.status,
             "song": song,
+            "error": generation_request.error_message or None,
         }
     )
 

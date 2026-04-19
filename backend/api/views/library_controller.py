@@ -58,6 +58,8 @@ def _paginate(queryset, request) -> dict:
             "occasion": song.occasion,
             "audio_file": song.audio_file,
             "privacy_level": song.privacy_level,
+            "cover_image": song.cover_image.url if song.cover_image else None,
+            "cover_color": song.cover_color,
             "created_at": song.created_at.isoformat(),
         }
         for song in page_obj

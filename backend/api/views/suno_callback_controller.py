@@ -13,9 +13,54 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from api.models import GenerationRequest, Song
+from api.models import GenerationRequest
+from api.services.suno_service_proxy import SunoServiceProxy
 
 logger = logging.getLogger(__name__)
+
+proxy = SunoServiceProxy()
+
+
+def _parse_callback_payload(
+    body: dict,
+) -> tuple[str | None, str, str | None, str | None, str | None]:
+    """Normalise Suno callback payloads into task ID, status, audio URL, image URL, and error."""
+    data = body.get("data") if isinstance(body.get("data"), dict) else {}
+    callback_type = str(data.get("callbackType") or body.get("status") or "").lower()
+
+    items = data.get("data") if isinstance(data.get("data"), list) else []
+    first_item = items[0] if items and isinstance(items[0], dict) else {}
+
+    task_id = (
+        data.get("task_id")
+        or data.get("taskId")
+        or body.get("task_id")
+        or body.get("taskId")
+    )
+    audio_url = (
+        first_item.get("audio_url")
+        or first_item.get("audioUrl")
+        or body.get("audioUrl")
+        or body.get("audio_url")
+    )
+    image_url = (
+        first_item.get("image_url")
+        or first_item.get("imageUrl")
+        or first_item.get("source_image_url")
+        or first_item.get("sourceImageUrl")
+        or body.get("imageUrl")
+        or body.get("image_url")
+    )
+    error = body.get("msg") or data.get("error") or body.get("error")
+
+    if callback_type == "complete":
+        status = "completed"
+    elif callback_type == "error":
+        status = "failed"
+    else:
+        status = callback_type
+
+    return task_id, status, audio_url, image_url, error
 
 
 @csrf_exempt
@@ -41,10 +86,7 @@ def suno_callback(request):
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON body."}, status=400)
 
-    task_id = body.get("taskId")
-    status = body.get("status", "").lower()
-    audio_url = body.get("audioUrl")
-    error = body.get("error")
+    task_id, status, audio_url, image_url, error = _parse_callback_payload(body)
 
     if not task_id:
         return JsonResponse({"error": "taskId is required."}, status=400)
@@ -65,18 +107,7 @@ def suno_callback(request):
                 status=400,
             )
 
-        # Build the Song from the original request's stored fields
-        song = Song.objects.create(
-            title=generation_request.title,
-            description=generation_request.description,
-            genre=generation_request.genre,
-            tone=generation_request.tone,
-            occasion=generation_request.occasion,
-            audio_file=audio_url,
-            user=generation_request.user,
-        )
-
-        generation_request.mark_completed(song)
+        song = proxy.store_generated_song(generation_request, audio_url, image_url)
         logger.info(
             "GenerationRequest %s completed — Song %s created.",
             generation_request.id,
