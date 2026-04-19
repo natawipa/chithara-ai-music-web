@@ -1,0 +1,43 @@
+version: '3.8'
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: music_backend
+    volumes:
+      - ./backend/media:/app/media
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: music_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: music_db
+    environment:
+      POSTGRES_DB: musicdb
+      POSTGRES_USER: musicuser
+      POSTGRES_PASSWORD: musicpass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
