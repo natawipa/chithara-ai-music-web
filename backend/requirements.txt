@@ -4,6 +4,7 @@ charset-normalizer==3.4.7
 Django==5.0.4
 idna==3.11
 pillow==12.2.0
+psycopg[binary]==3.2.12
 python-dotenv==1.2.2
 requests==2.33.1
 sqlparse==0.5.5
