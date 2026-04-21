@@ -58,6 +58,7 @@ class GenerationRequestAdmin(admin.ModelAdmin):
         "id",
         "title",
         "user",
+        "generator_strategy",
         "status",
         "external_task_id",
         "song",
@@ -67,9 +68,17 @@ class GenerationRequestAdmin(admin.ModelAdmin):
         "title",
         "description",
         "error_message",
+        "generator_strategy",
         "external_task_id",
         "user__username",
         "user__email",
     )
-    list_filter = ("status", "genre", "tone", "occasion", "created_at")
+    list_filter = (
+        "generator_strategy",
+        "status",
+        "genre",
+        "tone",
+        "occasion",
+        "created_at",
+    )
     readonly_fields = ("created_at", "updated_at")

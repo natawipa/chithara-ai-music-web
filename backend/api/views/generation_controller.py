@@ -11,14 +11,16 @@ import json
 import logging
 
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
 from api.decorators import json_login_required
 from api.models import GenerationRequest
-from api.models.enums import GenerationStatus, Genre
+from api.models.enums import GenerationStatus
+from api.services.generation import get_song_generator
+from api.services.generation_service import SongGenerationService
 from api.services.suno_service import InsufficientCreditError
-from api.services.suno_service_proxy import SunoServiceProxy
 
 logger = logging.getLogger(__name__)
 
@@ -77,42 +79,38 @@ def create(request):
         genre=genre,
         tone=tone,
         occasion=occasion,
+        generator_strategy=settings.GENERATOR_STRATEGY,
     )
 
-    # Map internal genre enum value → human-readable Suno style label.
-    # e.g. "HIP_HOP" → "Hip-Hop", "CLASSICAL" → "Classical"
     try:
-        style = Genre(genre).label
-    except ValueError:
-        style = genre
-
-    try:
-        service = SunoServiceProxy()
-        task_id = service.generate_song(
-            generation_request,
-            {
-                "title": title,
-                "prompt": description,   # description → prompt
-                "style": style,          # genre label → style
-            }
-        )
+        get_song_generator(generation_request.generator_strategy)
+        SongGenerationService().submit_generation(generation_request)
 
     except InsufficientCreditError:
         generation_request.mark_failed("Out of credit")
         return JsonResponse({"error": "Out of credit"}, status=400)
 
     except Exception as exc:
-        logger.exception(
-            "Suno submission failed for GenerationRequest %s", generation_request.id
-        )
-        generation_request.mark_failed(str(exc))
+        if generation_request.status != GenerationStatus.FAILED:
+            logger.exception(
+                "Generation submission failed for GenerationRequest %s",
+                generation_request.id,
+            )
+            generation_request.mark_failed(str(exc))
         return JsonResponse(
-            {"error": "Failed to submit to Suno.", "detail": str(exc)},
+            {"error": "Failed to submit generation request.", "detail": str(exc)},
             status=502,
         )
 
+    generation_request.refresh_from_db(fields=["status"])
+
     return JsonResponse(
-        {"id": generation_request.id, "status": generation_request.status},
+        {
+            "id": generation_request.id,
+            "status": generation_request.status,
+            "generator_strategy": generation_request.generator_strategy,
+            "external_task_id": generation_request.external_task_id,
+        },
         status=202,
     )
 
@@ -141,16 +139,12 @@ def status(request, id):
 
     if (
         generation_request.status == GenerationStatus.PROCESSING
-        and generation_request.external_task_id
     ):
         try:
-            SunoServiceProxy().sync_generation_status(generation_request)
+            SongGenerationService().sync_generation_status(generation_request)
             generation_request.refresh_from_db(fields=["status", "song", "error_message"])
         except Exception:
-            logger.exception(
-                "Failed to sync Suno status for GenerationRequest %s",
-                generation_request.id,
-            )
+            logger.exception("Failed to sync GenerationRequest %s", generation_request.id)
 
     song = None
     if generation_request.status == GenerationStatus.COMPLETED and generation_request.song:
@@ -160,6 +154,8 @@ def status(request, id):
         {
             "id": generation_request.id,
             "status": generation_request.status,
+            "generator_strategy": generation_request.generator_strategy,
+            "external_task_id": generation_request.external_task_id,
             "song": song,
             "error": generation_request.error_message or None,
         }

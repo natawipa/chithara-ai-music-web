@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from .enums import GenerationStatus, Genre, Occasion, Tone
+from .enums import GenerationStatus, GeneratorStrategy, Genre, Occasion, Tone
 
 
 class GenerationRequest(models.Model):
@@ -28,6 +28,11 @@ class GenerationRequest(models.Model):
         max_length=20,
         choices=GenerationStatus.choices,
         default=GenerationStatus.PROCESSING,
+    )
+    generator_strategy = models.CharField(
+        max_length=20,
+        choices=GeneratorStrategy.choices,
+        default=GeneratorStrategy.SUNO,
     )
     external_task_id = models.CharField(max_length=255, null=True, blank=True)
     error_message = models.TextField(blank=True, default="")

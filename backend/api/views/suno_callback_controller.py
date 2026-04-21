@@ -14,11 +14,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from api.models import GenerationRequest
-from api.services.suno_service_proxy import SunoServiceProxy
+from api.models.enums import GeneratorStrategy
+from api.services.generation_service import SongGenerationService
 
 logger = logging.getLogger(__name__)
 
-proxy = SunoServiceProxy()
+generation_service = SongGenerationService()
 
 
 def _parse_callback_payload(
@@ -100,6 +101,14 @@ def suno_callback(request):
         logger.warning("Callback received for unknown taskId: %s", task_id)
         return JsonResponse({"error": "Generation request not found."}, status=404)
 
+    if generation_request.generator_strategy != GeneratorStrategy.SUNO:
+        logger.warning(
+            "Ignoring Suno callback for GenerationRequest %s using strategy %s",
+            generation_request.id,
+            generation_request.generator_strategy,
+        )
+        return JsonResponse({"message": "callback ignored"})
+
     if status == "completed":
         if not audio_url:
             return JsonResponse(
@@ -107,7 +116,11 @@ def suno_callback(request):
                 status=400,
             )
 
-        song = proxy.store_generated_song(generation_request, audio_url, image_url)
+        song = generation_service.store_generated_song(
+            generation_request,
+            audio_url,
+            image_url,
+        )
         logger.info(
             "GenerationRequest %s completed — Song %s created.",
             generation_request.id,

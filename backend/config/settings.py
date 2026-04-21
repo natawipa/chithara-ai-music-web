@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -23,6 +24,12 @@ load_dotenv(BASE_DIR / ".env")
 
 
 def get_database_config(base_dir: Path) -> dict:
+    if len(sys.argv) > 1 and sys.argv[1] == "test":
+        return {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        }
+
     database_url = os.environ.get("DATABASE_URL", "").strip()
     if database_url:
         parsed = urlparse(database_url)
@@ -163,6 +170,11 @@ AUTH_USER_MODEL = "api.User"
 SUNO_API_BASE_URL = os.environ.get("SUNO_API_BASE_URL", "https://api.sunoapi.org/api/v1")
 SUNO_API_KEY = os.environ.get("SUNO_API_KEY", "")
 SUNO_CALLBACK_URL = os.environ.get("SUNO_CALLBACK_URL", "http://localhost:8000/api/suno/callback/")
+GENERATOR_STRATEGY = os.environ.get("GENERATOR_STRATEGY", "suno").strip().lower()
+MOCK_SONG_AUDIO_URL = os.environ.get(
+    "MOCK_SONG_AUDIO_URL",
+    "https://example.com/mock/generated-song.mp3",
+)
 
 
 # Google OAuth 2.0

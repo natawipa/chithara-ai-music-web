@@ -8,6 +8,11 @@ class GenerationStatus(models.TextChoices):
     PROCESSING = "PROCESSING", "Processing"
 
 
+class GeneratorStrategy(models.TextChoices):
+    MOCK = "mock", "Mock"
+    SUNO = "suno", "Suno"
+
+
 class Genre(models.TextChoices):
     CLASSICAL = "CLASSICAL", "Classical"
     COMEDY = "COMEDY", "Comedy"
