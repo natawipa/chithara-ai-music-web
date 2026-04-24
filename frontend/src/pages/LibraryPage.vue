@@ -62,6 +62,7 @@
           :active-song-id="currentSong ? currentSong.id : null"
           :is-playing="isPlaying"
           @play="togglePlay"
+          @download="downloadSong"
           @edit="openEdit"
           @delete="deleteSong"
         />
@@ -373,6 +374,27 @@ export default {
     openEdit(song) {
       this.selectedSong = song
       this.showEdit = true
+    },
+    downloadSong(song) {
+      const src = this.songSource(song)
+      if (!src) {
+        this.error = 'This song has no downloadable audio URL.'
+        return
+      }
+
+      const safeTitle = (song?.title || 'song')
+        .trim()
+        .replace(/[^a-z0-9-_]+/gi, '_')
+        .replace(/^_+|_+$/g, '')
+
+      const link = document.createElement('a')
+      link.href = src
+      link.download = `${safeTitle || 'song'}.mp3`
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     },
     openShare(song) {
       this.selectedSong = song

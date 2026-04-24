@@ -53,6 +53,10 @@
       </div>
 
       <div class="flex justify-end gap-2 pt-1">
+        <button @click="$emit('download', song)">
+          <Download class="h-4 w-4 text-black/60" />
+        </button>
+
         <button @click="$emit('edit', song)">
           <Pencil class="h-4 w-4 text-black/60" />
         </button>
@@ -66,11 +70,11 @@
 </template>
 
 <script>
-import { Globe, GlobeLock, Music4, Pause, Pencil, Play, Trash2 } from 'lucide-vue-next'
+import { Download, Globe, GlobeLock, Music4, Pause, Pencil, Play, Trash2 } from 'lucide-vue-next'
 
 export default {
   name: 'SongCard',
-  components: { Globe, GlobeLock, Music4, Pause, Pencil, Play, Trash2 },
+  components: { Download, Globe, GlobeLock, Music4, Pause, Pencil, Play, Trash2 },
   props: {
     song: {
       type: Object,
@@ -85,7 +89,7 @@ export default {
       default: false,
     },
   },
-  emits: ['play', 'edit', 'delete'],
+  emits: ['play', 'download', 'edit', 'delete'],
   computed: {
     coverStyle() {
       if (this.song.cover_image) return {}
