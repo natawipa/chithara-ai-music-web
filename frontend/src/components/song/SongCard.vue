@@ -1,44 +1,64 @@
 <template>
-  <article class="w-52 overflow-hidden border border-[var(--ink-black)] bg-[var(--white-soft)] p-3 shadow-sm">
-    <div class="relative border border-[var(--white)] h-40 overflow-hidden" :style="coverStyle">
+  <article class="w-52 overflow-hidden rounded-xl bg-white p-3 shadow-sm">
+    <div
+      class="relative h-40 overflow-hidden rounded-xl"
+      :style="coverStyle"
+    >
       <img
         v-if="song.cover_image"
         :src="song.cover_image"
         alt=""
         class="absolute inset-0 h-full w-full object-cover"
       />
+
       <div v-else class="flex h-full items-center justify-center">
-        <Music4 class="h-9 w-9" :class="song.cover_color ? 'text-white/60' : 'text-[var(--white)]/85'" />
+        <Music4 class="h-9 w-9 text-white/70" />
       </div>
-      <!-- Play/Pause -->
+
+      <!-- Play Button -->
       <button
-        class="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center border border-[var(--ink-black)]/10 bg-white shadow-sm"
+        class="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-md"
         @click="$emit('play', song)"
       >
-        <Pause v-if="activeSongId === song.id && isPlaying" class="h-5 w-5 text-[var(--ink-black)]" />
-        <Play v-else class="h-5 w-5 text-[var(--ink-black)]" />
+        <Pause
+          v-if="activeSongId === song.id && isPlaying"
+          class="h-5 w-5 text-black"
+        />
+        <Play
+          v-else
+          fill="black"
+          class="h-5 w-5 text-black ml-0.5"
+        />
       </button>
     </div>
 
     <div class="space-y-1.5 px-1 pt-3">
       <div class="flex items-center gap-1.5">
-        <h3 class="line-clamp-1 text-[14px] leading-none font-semibold tracking-tight text-[var(--ink-black)] uppercase">
+        <h3 class="line-clamp-1 text-sm font-semibold uppercase text-black">
           {{ song.title || 'Title' }}
         </h3>
-        <Globe v-if="song.privacy_level === 'PUBLIC'" class="h-3.5 w-3.5 shrink-0 text-[var(--ink-black)]/60" />
-        <GlobeLock v-else class="h-3.5 w-3.5 shrink-0 text-[var(--ink-black)]/60" />
+
+        <Globe
+          v-if="song.privacy_level === 'PUBLIC'"
+          class="h-3.5 w-3.5 text-black/50"
+        />
+        <GlobeLock
+          v-else
+          class="h-3.5 w-3.5 text-black/50"
+        />
       </div>
 
-      <div class="text-[11px] leading-tight font-semibold text-[var(--brand-yellow)]">
+      <div class="text-[11px] font-semibold text-[var(--brand-yellow)]">
         #{{ song.genre || 'TAG' }} #{{ song.tone || 'TAG' }}
       </div>
 
-      <div class="flex justify-end gap-1 pt-1">
-        <button class="p-1" @click="$emit('edit', song)" title="Edit">
-          <Pencil class="h-3.5 w-3.5 text-[var(--ink-black)]/60" />
+      <div class="flex justify-end gap-2 pt-1">
+        <button @click="$emit('edit', song)">
+          <Pencil class="h-4 w-4 text-black/60" />
         </button>
-        <button class="p-1" @click="$emit('delete', song)" title="Delete">
-          <Trash2 class="h-3.5 w-3.5 text-[var(--ink-black)]/60" />
+
+        <button @click="$emit('delete', song)">
+          <Trash2 class="h-4 w-4 text-black/60" />
         </button>
       </div>
     </div>

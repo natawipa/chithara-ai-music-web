@@ -1,22 +1,6 @@
 <template>
   <main class="min-h-screen pb-28">
-    <header class="border-b border-[var(--ink-black)] bg-[var(--white)]">
-      <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <div class="flex items-center gap-3">
-          <img :src="logoHorizontal" alt="Chithara logo" class="h-8 w-auto" />
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button
-            class="inline-flex items-center gap-2 border border-[var(--ink-black)] bg-[var(--brand-yellow)] px-4 py-2 text-sm font-semibold text-[var(--ink-black)] hover:brightness-95"
-            @click="showGenerate = true"
-          >
-            <Plus class="h-4 w-4" />
-            Generate
-          </button>
-        </div>
-      </div>
-    </header>
+    <UiNavbar :show-generate-button="true" :show-logout-button="true" @generate="showGenerate = true" />
 
     <section class="mx-auto max-w-7xl px-6 py-8">
       <div class="mb-6 flex flex-wrap gap-3">
@@ -25,26 +9,36 @@
           <input
             v-model="searchText"
             placeholder="Search songs..."
-            class="w-full border border-[var(--ink-black)] bg-[var(--white)] py-2 pl-10 pr-3 text-sm"
+            class="w-full rounded-xl border border-[var(--ink-black)] bg-[var(--white)] py-2 pl-10 pr-3 text-sm"
           />
         </div>
 
-        <select v-model="genreFilter" class="border border-[var(--ink-black)] bg-[var(--white)] px-3 py-2 text-sm">
-          <option value="">All genres</option>
-          <option v-for="g in genres" :key="g" :value="g">{{ g }}</option>
-        </select>
+        <div class="relative">
+          <select v-model="genreFilter" class="filter-select rounded-xl border border-[var(--ink-black)] bg-[var(--white)] px-3 py-2 text-sm">
+            <option value="">All genres</option>
+            <option v-for="g in genres" :key="g" :value="g">{{ g }}</option>
+          </select>
+          <ChevronDown class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-black)]/70" />
+        </div>
 
-        <select v-model="privacyFilter" class="border border-[var(--ink-black)] bg-[var(--white)] px-3 py-2 text-sm">
-          <option value="">All</option>
-          <option value="PUBLIC">Public</option>
-          <option value="PRIVATE">Private</option>
-        </select>
+        <div class="relative">
+          <select v-model="privacyFilter" class="filter-select rounded-xl border border-[var(--ink-black)] bg-[var(--white)] px-3 py-2 text-sm">
+            <option value="">All</option>
+            <option v-for="privacy in privacyLevelOptions" :key="privacy.value" :value="privacy.value">
+              {{ privacy.label }}
+            </option>
+          </select>
+          <ChevronDown class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-black)]/70" />
+        </div>
 
-        <select v-model="sortBy" class="border border-[var(--ink-black)] bg-[var(--white)] px-3 py-2 text-sm">
-          <option value="new">Newest first</option>
-          <option value="old">Oldest first</option>
-          <option value="title">Title A-Z</option>
-        </select>
+        <div class="relative">
+          <select v-model="sortBy" class="filter-select rounded-xl border border-[var(--ink-black)] bg-[var(--white)] px-3 py-2 text-sm">
+            <option value="new">Newest first</option>
+            <option value="old">Oldest first</option>
+            <option value="title">Title A-Z</option>
+          </select>
+          <ChevronDown class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-black)]/70" />
+        </div>
       </div>
 
       <div v-if="error" class="mb-4 rounded-xl border border-red-300 bg-red-50/70 px-4 py-3 text-sm text-red-800">
@@ -149,21 +143,22 @@
 </template>
 
 <script>
-import { Pause, Play, Plus, Search, SkipBack, SkipForward } from 'lucide-vue-next'
+import { ChevronDown, Pause, Play, Search, SkipBack, SkipForward } from 'lucide-vue-next'
 import SongCard from '../components/song/SongCard.vue'
 import EditSongModal from '../components/song/EditSongModal.vue'
 import ShareSongModal from '../components/song/ShareSongModal.vue'
 import GenerateSongModal from '../components/generation/GenerateSongModal.vue'
+import UiNavbar from '../components/ui/Navbar.vue'
+import { PRIVACY_LEVEL_OPTIONS } from '../constants/enums'
 import { getGenerationStatus } from '../api/generation'
 import { deleteSongById, getLibrarySongs } from '../api/song'
-import logoHorizontal from '../assets/logo/logo-horizontal.svg'
 
 export default {
   name: 'LibraryPage',
   components: {
+    ChevronDown,
     Play,
     Pause,
-    Plus,
     Search,
     SkipBack,
     SkipForward,
@@ -171,6 +166,7 @@ export default {
     EditSongModal,
     ShareSongModal,
     GenerateSongModal,
+    UiNavbar,
   },
   data() {
     return {
@@ -184,12 +180,12 @@ export default {
       searchText: '',
       genreFilter: '',
       privacyFilter: '',
+      privacyLevelOptions: PRIVACY_LEVEL_OPTIONS,
       sortBy: 'new',
       currentSong: null,
       isPlaying: false,
       currentTime: 0,
       duration: 0,
-      logoHorizontal,
       generationMessage: '',
       generationPollTimer: null,
       activeGenerationId: null,
@@ -429,3 +425,11 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.25rem;
+}
+</style>

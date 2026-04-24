@@ -29,13 +29,8 @@
 
       <!-- Button -->
       <button
-        class="landing-button flex items-center justify-center
-               rounded-xl font-bold text-[#141414]
-               bg-gradient-to-b from-[#ffeb97] to-[#ffc7a6]
-               transition-all duration-200
-               hover:brightness-105
-               hover:shadow-[0_0_2dvh_rgba(255,199,166,0.6)]
-               active:scale-[0.98]"
+        class="app-btn landing-button text-[#141414] bg-white
+               hover:bg-amber-400/35"
         @click="handleLogin"
       >
         <img
