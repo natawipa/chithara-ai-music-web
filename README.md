@@ -360,3 +360,12 @@ Open:
 
 - Frontend: http://localhost:5173  
 - Backend: http://127.0.0.1:8000
+
+<div align="center">
+	<b>App Screenshots</b><br><br>
+	<img src="screenshots/landing-page.png" alt="Landing Page" width="320"/>
+	<img src="screenshots/library-page.png" alt="Library Page" width="320"/>
+	<img src="screenshots/generate-song-modal.png" alt="Generate Song Modal" width="320"/>
+	<img src="screenshots/edit-song-modal.png" alt="Edit Song Modal" width="320"/>
+	<img src="screenshots/django-admin.png" alt="Django Admin" width="320"/>
+</div>
