@@ -25,11 +25,20 @@ generation_service = SongGenerationService()
 def _parse_callback_payload(
     body: dict,
 ) -> tuple[str | None, str, str | None, str | None, str | None]:
-    """Normalise Suno callback payloads into task ID, status, audio URL, image URL, and error."""
+    """Normalise Suno callback payloads into task ID, status, audio URL, image URL, and error.
+
+    Actual Suno callback shape:
+        body.data.callbackType  = "complete" | "error"
+        body.data.task_id       = "<task id>"
+        body.data.data          = [{audio_url, image_url, ...}, ...]
+    """
     data = body.get("data") if isinstance(body.get("data"), dict) else {}
+
     callback_type = str(data.get("callbackType") or body.get("status") or "").lower()
 
-    items = data.get("data") if isinstance(data.get("data"), list) else []
+    # clips live in data.data
+    raw_items = data.get("data")
+    items = raw_items if isinstance(raw_items, list) else []
     first_item = items[0] if items and isinstance(items[0], dict) else {}
 
     task_id = (
@@ -40,23 +49,19 @@ def _parse_callback_payload(
     )
     audio_url = (
         first_item.get("audio_url")
-        or first_item.get("audioUrl")
-        or body.get("audioUrl")
+        or first_item.get("source_audio_url")
         or body.get("audio_url")
     )
     image_url = (
         first_item.get("image_url")
-        or first_item.get("imageUrl")
         or first_item.get("source_image_url")
-        or first_item.get("sourceImageUrl")
-        or body.get("imageUrl")
         or body.get("image_url")
     )
-    error = body.get("msg") or data.get("error") or body.get("error")
+    error = data.get("error") or body.get("msg") or body.get("error")
 
-    if callback_type == "complete":
+    if callback_type in ("complete", "success"):
         status = "completed"
-    elif callback_type == "error":
+    elif callback_type in ("error", "failed", "failure"):
         status = "failed"
     else:
         status = callback_type
