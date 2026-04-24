@@ -166,6 +166,9 @@ POSTGRES_USER=musicuser
 POSTGRES_PASSWORD=musicpassword
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
+OAUTH_GOOGLE_CLIENT_ID=your_google_client_id
+OAUTH_GOOGLE_CLIENT_SECRET=your_google_client_secret
+OAUTH_GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback/
 
 GENERATOR_STRATEGY=mock
 ```
