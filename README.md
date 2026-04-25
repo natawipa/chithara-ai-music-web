@@ -23,8 +23,6 @@ Users can generate songs from text prompts and manage a personal music library.
 7. [Troubleshooting](#7-troubleshooting)
 8. [Project Structure](#8-project-structure)
 
----
-
 # 1. Prerequisites
 
 ## Docker setup
@@ -34,8 +32,6 @@ Users can generate songs from text prompts and manage a personal music library.
 - Python 3.11+
 - Node.js 20+
 - PostgreSQL 15+
-
----
 
 # 2. Environment Configuration
 
@@ -72,8 +68,6 @@ GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/google/callback/
 
 > `POSTGRES_HOST` is overridden to `db` automatically by `docker-compose.yml` — no manual change needed for Docker.
 
----
-
 # 3. Docker Setup (Recommended)
 
 One command starts the database, runs migrations, and launches both servers with live-reload:
@@ -105,8 +99,6 @@ docker compose down
 ```bash
 docker compose down -v
 ```
-
----
 
 # 4. Manual Setup
 
@@ -148,8 +140,6 @@ cd frontend
 npm run dev
 ```
 
----
-
 # 5. Mock vs Real Song Generation
 
 **Mock** (default, no API key needed):
@@ -168,8 +158,6 @@ SUNO_API_BASE_URL=https://api.sunoapi.org/api/v1
 SUNO_CALLBACK_URL=http://localhost:8000/api/suno/callback/
 ```
 
----
-
 # 6. API Overview
 
 All endpoints are prefixed with `/api/`.
@@ -187,8 +175,6 @@ All endpoints are prefixed with `/api/`.
 | DELETE | `/songs/<id>/` | Delete song |
 | GET | `/library/` | Public library |
 | GET | `/songs/<id>/share/` | Shareable song link |
-
----
 
 # 7. Troubleshooting
 
@@ -222,8 +208,6 @@ source .venv/bin/activate
 pip install -r backend/requirements.txt
 ```
 
----
-
 # 8. Project Structure
 
 ```text
@@ -250,10 +234,9 @@ chithara-ai-music-web/
 │       ├── components/
 │       ├── api/
 │       └── router/
+├── diagrams/
 └── screenshots/
 ```
-
----
 
 <div align="center">
 	<b>Screenshots</b><br><br>
