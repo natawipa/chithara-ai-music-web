@@ -5,16 +5,17 @@ services:
       dockerfile: Dockerfile
     container_name: music_backend
     volumes:
-      - ./backend/media:/app/media
+      - ./backend:/app
     ports:
       - "8000:8000"
     env_file:
       - backend/.env
     environment:
       POSTGRES_HOST: db
-      DATABASE_URL: ""
+      ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   frontend:
@@ -22,8 +23,13 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: music_frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     ports:
-      - "3000:80"
+      - "5173:5173"
+    environment:
+      VITE_API_TARGET: http://backend:8000
     depends_on:
       - backend
     restart: unless-stopped
@@ -37,6 +43,11 @@ services:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-musicuser}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
 volumes:

@@ -6,7 +6,7 @@ Users can generate songs from text prompts and manage a personal music library.
 ## Tech Stack
 
 | Layer | Technology |
-|------|------------|
+|-------|------------|
 | Frontend | Vue 3, Vite, Tailwind CSS |
 | Backend | Django 5, psycopg3 |
 | Database | PostgreSQL 15 |
@@ -14,121 +14,119 @@ Users can generate songs from text prompts and manage a personal music library.
 
 ## Table of Contents
 
-1. Prerequisites  
-2. Installation  
-3. Database Setup  
-4. Environment Configuration  
-5. Running the Application  
-6. Mock Song Generation  
-7. API Overview  
-8. Troubleshooting  
-9. Project Structure
+1. [Prerequisites](#1-prerequisites)
+2. [Environment Configuration](#2-environment-configuration)
+3. [Docker Setup (Recommended)](#3-docker-setup-recommended)
+4. [Manual Setup](#4-manual-setup)
+5. [Mock vs Real Song Generation](#5-mock-vs-real-song-generation)
+6. [API Overview](#6-api-overview)
+7. [Troubleshooting](#7-troubleshooting)
+8. [Project Structure](#8-project-structure)
+
+---
 
 # 1. Prerequisites
 
-Install:
+## Docker setup
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose)
 
+## Manual setup
 - Python 3.11+
-- Node.js 18+
-- npm 9+
+- Node.js 20+
 - PostgreSQL 15+
-- Git
 
-Check versions:
+---
+
+# 2. Environment Configuration
+
+Copy the example config and edit it:
 
 ```bash
-python3 --version
-node --version
-npm --version
-psql --version
-git --version
+cp backend/.env.example backend/.env
 ```
 
-## Install PostgreSQL
+Minimum required values:
 
-### macOS
+```env
+# Django
+DJANGO_SECRET_KEY=replace_me          # generate with: python -c "import secrets; print(secrets.token_urlsafe(50))"
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
 
-```bash
-brew install postgresql@15
-brew services start postgresql@15
+# Database
+POSTGRES_DB=musicdb
+POSTGRES_USER=musicuser
+POSTGRES_PASSWORD=musicpassword
+POSTGRES_HOST=localhost                # use "db" when running via Docker
+POSTGRES_PORT=5432
+
+# Generation strategy
+GENERATOR_STRATEGY=mock               # "mock" for dev, "suno" for real API
+MOCK_SONG_AUDIO_URL=https://example.com/mock/generated-song.mp3
+
+# Google OAuth
+GOOGLE_OAUTH_CLIENT_ID=your_google_client_id
+GOOGLE_OAUTH_CLIENT_SECRET=your_google_client_secret
+GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/google/callback/
 ```
 
-### Ubuntu / Debian
+> `POSTGRES_HOST` is overridden to `db` automatically by `docker-compose.yml` — no manual change needed for Docker.
+
+---
+
+# 3. Docker Setup (Recommended)
+
+One command starts the database, runs migrations, and launches both servers with live-reload:
 
 ```bash
-sudo apt update
-sudo apt install postgresql postgresql-contrib
-sudo systemctl enable postgresql
-sudo systemctl start postgresql
+docker compose up --build
 ```
 
-### Windows
+| Service | URL |
+|---------|-----|
+| Frontend (Vite) | http://localhost:5173 |
+| Backend (Django) | http://localhost:8000 |
+| PostgreSQL | localhost:5432 |
 
-Download and install:
-
-https://www.postgresql.org/download/windows/
-
-# 2. Installation
-
-Clone repository:
+**Subsequent starts** (no code changes):
 
 ```bash
-git clone https://github.com/natawipa/chithara-ai-music-web.git
-cd chithara-ai-music-web
+docker compose up
 ```
 
-## Create Python virtual environment
+**Stop all containers:**
 
 ```bash
+docker compose down
+```
+
+**Reset database** (drops all data):
+
+```bash
+docker compose down -v
+```
+
+---
+
+# 4. Manual Setup
+
+## Install dependencies
+
+```bash
+# Backend
 python3 -m venv .venv
-```
-
-Activate it:
-
-Mac/Linux
-
-```bash
-source .venv/bin/activate
-```
-
-Windows
-
-```powershell
-.venv\Scripts\activate
-```
-
-Install backend dependencies:
-
-```bash
-pip install --upgrade pip
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r backend/requirements.txt
+
+# Frontend
+cd frontend && npm install && cd ..
 ```
 
-Install frontend dependencies:
+## Create PostgreSQL database
 
 ```bash
-cd frontend
-npm install
-cd ..
+psql postgres          # macOS; Linux: sudo -u postgres psql
 ```
-
-# 3. Database Setup
-
-Connect to PostgreSQL:
-
-macOS:
-
-```bash
-psql postgres
-```
-
-Ubuntu:
-
-```bash
-sudo -u postgres psql
-```
-
-Create database and user:
 
 ```sql
 CREATE USER musicuser WITH PASSWORD 'musicpassword';
@@ -137,235 +135,128 @@ GRANT ALL PRIVILEGES ON DATABASE musicdb TO musicuser;
 \q
 ```
 
-Verify:
+## Run migrations and start servers
 
 ```bash
-psql -U musicuser -d musicdb -c "\conninfo"
-```
-
-# 4. Environment Configuration
-
-Copy example config:
-
-```bash
-cp backend/.env.example backend/.env
-```
-
-Edit:
-
-```bash
-backend/.env
-```
-
-Minimum configuration:
-
-```env
-DJANGO_SECRET_KEY=replace_me
-POSTGRES_DB=musicdb
-POSTGRES_USER=musicuser
-POSTGRES_PASSWORD=musicpassword
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-OAUTH_GOOGLE_CLIENT_ID=your_google_client_id
-OAUTH_GOOGLE_CLIENT_SECRET=your_google_client_secret
-OAUTH_GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback/
-
-GENERATOR_STRATEGY=mock
-```
-
-Generate secret key:
-
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(50))"
-```
-
-Paste into:
-
-```env
-DJANGO_SECRET_KEY=your_generated_secret
-```
-
-# 5. Running the Application
-
-## Run migrations
-
-```bash
+# Terminal 1 — backend
 cd backend
 python manage.py migrate
-```
-
-Optional admin user:
-
-```bash
-python manage.py createsuperuser
-```
-
-## Start backend
-
-```bash
 python manage.py runserver
-```
 
-Backend:
-
-```text
-http://127.0.0.1:8000
-```
-
-Open a second terminal:
-
-```bash
+# Terminal 2 — frontend
 cd frontend
 npm run dev
 ```
 
-Frontend:
+---
 
-```text
-http://localhost:5173
-```
+# 5. Mock vs Real Song Generation
 
-# 6. Mock Song Generation
-
-Recommended for development:
+**Mock** (default, no API key needed):
 
 ```env
 GENERATOR_STRATEGY=mock
-MOCK_SONG_AUDIO_URL=https://example.com/mock-song.mp3
+MOCK_SONG_AUDIO_URL=https://example.com/mock/generated-song.mp3
 ```
 
-No Suno key required.
-
-## Real Suno Integration
+**Real Suno API:**
 
 ```env
 GENERATOR_STRATEGY=suno
 SUNO_API_KEY=your_api_key
+SUNO_API_BASE_URL=https://api.sunoapi.org/api/v1
+SUNO_CALLBACK_URL=http://localhost:8000/api/suno/callback/
 ```
 
-# 7. API Overview
+---
 
-All endpoints begin with:
+# 6. API Overview
 
-```text
-/api/
-```
+All endpoints are prefixed with `/api/`.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/auth/register/` | Register |
-| POST | `/auth/login/` | Login |
+| POST | `/auth/login/` | Login (Google OAuth redirect) |
+| GET | `/auth/google/callback/` | Google OAuth callback |
 | POST | `/auth/logout/` | Logout |
-| GET | `/songs/` | List songs |
-| POST | `/generate/` | Generate song |
-| GET | `/generate/<id>/status/` | Poll generation |
-| PATCH | `/songs/<id>/` | Update song |
+| GET | `/songs/` | List user's songs |
+| POST | `/generate/` | Generate a song |
+| GET | `/generate/<id>/status/` | Poll generation status |
+| PATCH | `/songs/<id>/` | Update song metadata |
 | DELETE | `/songs/<id>/` | Delete song |
 | GET | `/library/` | Public library |
+| GET | `/songs/<id>/share/` | Shareable song link |
 
-# 8. Troubleshooting
+---
 
-## PostgreSQL connection refused
+# 7. Troubleshooting
 
-Start PostgreSQL:
-
-Mac:
-
+### `relation "django_session" does not exist`
+Migrations have not been applied. With Docker this is automatic on startup. For manual setup, run:
 ```bash
-brew services start postgresql@15
+cd backend && python manage.py migrate
 ```
 
-Linux:
+### Backend can't connect to PostgreSQL
+- **Docker:** Make sure the `db` container is healthy — the backend waits for the healthcheck before starting.
+- **Manual:** Ensure PostgreSQL is running (`brew services start postgresql@15` / `sudo systemctl start postgresql`).
 
-```bash
-sudo systemctl start postgresql
-```
-
-## role "musicuser" does not exist
-
+### `role "musicuser" does not exist`
 ```sql
 CREATE USER musicuser WITH PASSWORD 'musicpassword';
 ```
 
-## database "musicdb" does not exist
-
+### `database "musicdb" does not exist`
 ```sql
 CREATE DATABASE musicdb OWNER musicuser;
 ```
 
-## Django not found
+### Frontend can't reach the API
+- **Docker:** The Vite proxy targets `http://backend:8000` via the `VITE_API_TARGET` env var set in `docker-compose.yml`.
+- **Manual:** The proxy targets `http://localhost:8000` by default. Make sure Django is running on port 8000.
 
-Activate venv:
-
+### Django not found (manual setup)
 ```bash
 source .venv/bin/activate
-```
-
-Reinstall dependencies:
-
-```bash
 pip install -r backend/requirements.txt
 ```
 
-## Migration errors
+---
 
-Check `.env` values:
-
-```env
-POSTGRES_DB
-POSTGRES_USER
-POSTGRES_PASSWORD
-POSTGRES_HOST
-```
-
-# 9. Project Structure
+# 8. Project Structure
 
 ```text
 chithara-ai-music-web/
+├── docker-compose.yml
 ├── backend/
+│   ├── Dockerfile
 │   ├── manage.py
 │   ├── requirements.txt
 │   ├── .env.example
 │   ├── api/
 │   │   ├── models/
 │   │   ├── services/
-│   │   └── views/
+│   │   ├── views/
+│   │   └── migrations/
 │   └── config/
 │       └── settings.py
-│
 ├── frontend/
-│   ├── src/
-│   │   ├── pages/
-│   │   ├── components/
-│   │   └── api/
-│   └── package.json
-│
-└── README.md
+│   ├── Dockerfile
+│   ├── vite.config.js
+│   ├── package.json
+│   └── src/
+│       ├── pages/
+│       ├── components/
+│       ├── api/
+│       └── router/
+└── screenshots/
 ```
 
-## Development Workflow
-
-Run backend:
-
-```bash
-cd backend
-python manage.py runserver
-```
-
-Run frontend:
-
-```bash
-cd frontend
-npm run dev
-```
-
-Open:
-
-- Frontend: http://localhost:5173  
-- Backend: http://127.0.0.1:8000
+---
 
 <div align="center">
-	<b>App Screenshots</b><br><br>
+	<b>Screenshots</b><br><br>
 	<img src="screenshots/landing-page.png" alt="Landing Page" width="320"/>
 	<img src="screenshots/library-page.png" alt="Library Page" width="320"/>
 	<img src="screenshots/generate-song-modal.png" alt="Generate Song Modal" width="320"/>
