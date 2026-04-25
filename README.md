@@ -191,17 +191,20 @@ All endpoints are prefixed with `/api/`.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/auth/register/` | Register |
-| POST | `/auth/login/` | Login (Google OAuth redirect) |
+| GET | `/auth/login/` | Login (Google OAuth redirect) |
 | GET | `/auth/google/callback/` | Google OAuth callback |
 | POST | `/auth/logout/` | Logout |
+| GET | `/auth/me/` | Get current user profile |
 | GET | `/songs/` | List user's songs |
+| POST | `/songs/<id>/update/` | Update song metadata |
+| DELETE | `/songs/<id>/delete/` | Delete song |
+| POST | `/songs/<id>/share/` | Generate share link for a song |
+| GET | `/songs/share/<token>/` | Access shared song (public) |
 | POST | `/generate/` | Generate a song |
 | GET | `/generate/<id>/status/` | Poll generation status |
-| PATCH | `/songs/<id>/` | Update song metadata |
-| DELETE | `/songs/<id>/` | Delete song |
-| GET | `/library/` | Public library |
-| GET | `/songs/<id>/share/` | Shareable song link |
+| POST | `/generate/<id>/cancel/` | Cancel generation |
+| GET | `/songs/filter/` | Filter user's songs |
+| GET | `/songs/search/` | Search user's songs |
 
 # 8. Troubleshooting
 
