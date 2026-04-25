@@ -16,12 +16,13 @@ Users can generate songs from text prompts and manage a personal music library.
 
 1. [Prerequisites](#1-prerequisites)
 2. [Environment Configuration](#2-environment-configuration)
-3. [Docker Setup (Recommended)](#3-docker-setup-recommended)
-4. [Manual Setup](#4-manual-setup)
-5. [Mock vs Real Song Generation](#5-mock-vs-real-song-generation)
-6. [API Overview](#6-api-overview)
-7. [Troubleshooting](#7-troubleshooting)
-8. [Project Structure](#8-project-structure)
+3. [Authentication Setup](#3-authentication-setup)
+4. [Docker Setup (Recommended)](#4-docker-setup-recommended)
+5. [Manual Setup](#5-manual-setup)
+6. [Mock vs Real Song Generation](#6-mock-vs-real-song-generation)
+7. [API Overview](#7-api-overview)
+8. [Troubleshooting](#8-troubleshooting)
+9. [Project Structure](#9-project-structure)
 
 # 1. Prerequisites
 
@@ -68,7 +69,33 @@ GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/google/callback/
 
 > `POSTGRES_HOST` is overridden to `db` automatically by `docker-compose.yml` — no manual change needed for Docker.
 
-# 3. Docker Setup (Recommended)
+# 3. Authentication Setup
+
+## Google OAuth
+
+For social login functionality:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a new project (or select an existing one).
+3. Navigate to **APIs & Services -> Credentials**.
+4. Click **Create Credentials -> OAuth 2.0 Client ID**.
+5. Configure the OAuth consent screen if prompted.
+6. Choose **Web application**.
+7. Add this Authorized redirect URI:
+
+```text
+http://localhost:8000/api/auth/google/callback/
+```
+
+8. Copy credentials into `backend/.env`:
+
+```env
+GOOGLE_OAUTH_CLIENT_ID=your_client_id_here
+GOOGLE_OAUTH_CLIENT_SECRET=your_client_secret_here
+GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/google/callback/
+```
+
+# 4. Docker Setup (Recommended)
 
 One command starts the database, runs migrations, and launches both servers with live-reload:
 
@@ -100,7 +127,7 @@ docker compose down
 docker compose down -v
 ```
 
-# 4. Manual Setup
+# 5. Manual Setup
 
 ## Install dependencies
 
@@ -140,7 +167,7 @@ cd frontend
 npm run dev
 ```
 
-# 5. Mock vs Real Song Generation
+# 6. Mock vs Real Song Generation
 
 **Mock** (default, no API key needed):
 
@@ -158,7 +185,7 @@ SUNO_API_BASE_URL=https://api.sunoapi.org/api/v1
 SUNO_CALLBACK_URL=http://localhost:8000/api/suno/callback/
 ```
 
-# 6. API Overview
+# 7. API Overview
 
 All endpoints are prefixed with `/api/`.
 
@@ -176,7 +203,7 @@ All endpoints are prefixed with `/api/`.
 | GET | `/library/` | Public library |
 | GET | `/songs/<id>/share/` | Shareable song link |
 
-# 7. Troubleshooting
+# 8. Troubleshooting
 
 ### `relation "django_session" does not exist`
 Migrations have not been applied. With Docker this is automatic on startup. For manual setup, run:
@@ -208,7 +235,7 @@ source .venv/bin/activate
 pip install -r backend/requirements.txt
 ```
 
-# 8. Project Structure
+# 9. Project Structure
 
 ```text
 chithara-ai-music-web/
@@ -238,11 +265,21 @@ chithara-ai-music-web/
 └── screenshots/
 ```
 
+# App Screenshots
 <div align="center">
-	<b>Screenshots</b><br><br>
 	<img src="screenshots/landing-page.png" alt="Landing Page" width="320"/>
 	<img src="screenshots/library-page.png" alt="Library Page" width="320"/>
 	<img src="screenshots/generate-song-modal.png" alt="Generate Song Modal" width="320"/>
 	<img src="screenshots/edit-song-modal.png" alt="Edit Song Modal" width="320"/>
 	<img src="screenshots/django-admin.png" alt="Django Admin" width="320"/>
+</div>
+
+# Diagrams Section
+<div align="center">
+	<h3>Domain Model</h3>
+	<img src="diagrams/chithara_domain_model.png" alt="Domain Model" width="600"/>
+	<h3>Architecture Diagrams</h3><br/>
+	<img src="diagrams/chithara_mvt_architecture.png" alt="Architecture Diagram" width="600"/>
+	<h3>Song Generation Sequence Diagram</h3>
+	<img src="diagrams/song_generation_flow.png" alt="Sequence Diagram" width="600"/>
 </div>
